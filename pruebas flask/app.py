@@ -1,12 +1,11 @@
 from flask import Flask, request, render_template, url_for, redirect, flash
 from flask_mysqldb import MySQL
-import MySQLdb
 
 app = Flask(__name__)
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = 'bdflask'
+app.config['MYSQL_DB'] = 'tbmedicos'
 
 app.secret_key = 'mysecretkey'
 
@@ -30,123 +29,173 @@ def home():
         print(f"Error al realizar la consulta en la tabla tbmedicos: {e}")
         return render_template('index.html', albums=[])
 
-@app.route('/registros')
-def registros():
-    return render_template('registros.html')
 
-@app.route('/consulta')
-def consulta():
-    cursor = mysql.connection.cursor()
-    cursor.execute('SELECT * FROM tb_medicos')
-    medicos = cursor.fetchall()
-    return render_template('consulta.html', medicos=medicos)
+@app.route('/registro', methods=['GET', 'POST'])
+def formulario():
+    if request.method == 'POST':
+        try:
+            Fnombre = request.form['txtNombre']
+            Frfc = request.form['txtRfc']
+            Fcedula = request.form['txtCedula']
+            Fcorreo = request.form['txtCorreo']
+            Fcontraseña = request.form['txtContraseña']
+            Frol = request.form['txtRol']
+            
+            cursor = mysql.connection.cursor()
+            cursor.execute('INSERT INTO tbmedicos (nombre, rfc, cedulaP, correoE, contraseña, rol) VALUES (%s, %s, %s, %s, %s, %s)', 
+                           (Fnombre, Frfc, Fcedula, Fcorreo, Fcontraseña, Frol))
+            mysql.connection.commit()
+            flash('Médico registrado correctamente')
+            return redirect(url_for('consultas')) 
+        except Exception as e:
+            print(f"Error al registrar el médico: {e}")
+            flash('Error al registrar el médico: ' + str(e))
+            return redirect(url_for('formulario'))  
+    
+    return render_template('GuardarAlbum.html')
 
-@app.route('/expedientes')
-def expedientes():
+@app.route('/consultas')
+def consultas():
     try:
         cursor = mysql.connection.cursor()
-        cursor.execute('SELECT * FROM tb_pacientes')
-        pacientes = cursor.fetchall()
-        return render_template('expedientes.html', pacientes=pacientes)
+        cursor.execute('SELECT * FROM tbmedicos')
+        consultaA = cursor.fetchall()
+        return render_template('consultaMedicos.html', view='ConsultaMedicos', medicos=consultaA)
     except Exception as e:
-        print(f"Error al realizar la consulta en la tabla tb_pacientes: {e}")
-        return render_template('expedientes.html', pacientes=[])
+        print(f"Error al realizar la consulta en la tabla tbmedicos: {e}")
+        return render_template('consultaMedicos.html', view='ConsultaMedicos', medicos=[])
 
-@app.route('/guardarPaciente', methods=['POST'])
-def guardarPaciente():
+@app.route('/editar/<id>')
+def editar(id):
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute('SELECT * FROM tbmedicos WHERE id=%s', [id])
+        consultaA = cur.fetchone()
+        return render_template('editar.html', medicos=consultaA)
+    except Exception as e:
+        print(f"Error al realizar la consulta en la tabla tbmedicos: {e}")
+        flash('Error al consultar el médico: ' + str(e))
+        return redirect(url_for('home'))
+
+@app.route('/ActualizarAlbum/<id>', methods=['POST'])
+def ActualizarAlbum(id):
     if request.method == 'POST':
-        fnombre = request.form['txtnombre']
-        fpaciente = request.form['txtpaciente']
-        ffecha = request.form['txtfecha']
-        
-        cursor = mysql.connection.cursor()
+        try:
+            Fnombre = request.form['txtNombre']
+            Frfc = request.form['txtRfc']
+            Fcedula = request.form['txtCedula']
+            Fcorreo = request.form['txtCorreo']
+            Fcontraseña = request.form['txtContraseña']
+            Frol = request.form['txtRol']
 
-        # Verificar si el médico existe en la tabla tb_medicos
-        cursor.execute('SELECT * FROM tb_medicos WHERE nombre = %s', (fnombre,))
-        medico = cursor.fetchone()
+            cursor = mysql.connection.cursor()
+            cursor.execute('UPDATE tbmedicos SET nombre=%s, rfc=%s, cedulaP=%s, correoE=%s, contraseña=%s, rol=%s WHERE id=%s',
+                           (Fnombre, Frfc, Fcedula, Fcorreo, Fcontraseña, Frol, id))
+            mysql.connection.commit()
+            flash('Médico actualizado correctamente')
+            return redirect(url_for('home'))
 
-        if medico is None:
-            flash('El nombre del médico no existe en la tabla de médicos.')
-            return redirect(url_for('expedientes'))
+        except Exception as e:
+            flash('Error al actualizar el médico: ' + str(e))
+            print(e)
+            return redirect(url_for('home'))
 
-        # Insertar el nuevo paciente
-        cursor.execute('INSERT INTO tb_pacientes (nombre, paciente, fecha, id_medico) VALUES (%s, %s, %s, %s)', (fnombre, fpaciente, ffecha, medico[0]))
+@app.route('/eliminar/<id>')
+def eliminar(id):
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute('DELETE FROM tbmedicos WHERE id=%s', [id])
         mysql.connection.commit()
-        flash('Expediente generado correctamente')
-        return redirect(url_for('expedientes'))
+        flash('Se ha eliminado correctamente')
+        return redirect(url_for('home'))
+    except Exception as e:
+        flash('Error al eliminar: ' + str(e))
+        return redirect(url_for('home'))
+    
+    
+@app.route('/expediente')
+def expediente():
+    return render_template('expediente.html')
 
-@app.route('/guardarMedico', methods=['POST'])
-def guardarMedico():
+@app.route('/registroP', methods=['GET', 'POST'])
+def registroP():
     if request.method == 'POST':
-        fnombre = request.form['txtnombre']
-        fcorreo = request.form['txtcorreo']
-        frol = request.form['txtrol']
-        fcedula = request.form['txtcedula']
-        frfc = request.form['txtrfc']
-        fcontrasena = request.form['txtcontrasena']
-        cursor = mysql.connection.cursor()
-        cursor.execute('INSERT INTO tb_medicos (nombre, correo, id_roles, cedula, rfc, contrasena) VALUES (%s, %s, %s, %s, %s, %s)', (fnombre, fcorreo, frol, fcedula, frfc, fcontrasena))
-        mysql.connection.commit()
-        flash('Médico integrado correctamente')
-        return redirect(url_for('consulta'))
+        try:
+            Fmedico = request.form['txtMedico']
+            Fnombre = request.form['txtNombre']
+            Ffecha_nac = request.form['txtfecha_nac']
+            Fenfermedades_cronicas = request.form['txtenfermedades_cronicas']
+            Falergias = request.form['txtalergias']
+            Fantecedentes_familiares = request.form['txtantecedentes_familiares']
+            
+            cursor = mysql.connection.cursor()
+            cursor.execute('INSERT INTO pacientes (medico, nombre, fecha_nac, enfermedades_cronicas, alergias, antecedentes_familiares) VALUES (%s, %s, %s, %s, %s, %s)', 
+                           (Fmedico, Fnombre, Ffecha_nac, Fenfermedades_cronicas, Falergias, Fantecedentes_familiares))
+            mysql.connection.commit()
+            flash('Paciente registrado correctamente')
+            return redirect(url_for('expediente')) 
+        except Exception as e:
+            print(f"Error al registrar al paciente: {e}")
+            flash('Error al registrar al paciente: ' + str(e))
+            return redirect(url_for('expediente'))  
+    
+    return render_template('guardarpacientes.html')
 
-@app.route('/editarPaciente/<int:id>', methods=['GET', 'POST'])
-def editarPaciente(id):
+@app.route('/exploracion')
+def exploracion():
+    return render_template('exploracion.html')
+
+@app.route('/diagnostico')
+def diagnostico():
+    return render_template('diagnostico.html')
+
+@app.route('/consultarPacientes')
+def consultaP():
+        try:
+            cursor = mysql.connection.cursor()
+            cursor.execute('SELECT * FROM pacientes')
+            consultaA = cursor.fetchall()
+            return render_template('consultaP.html', view='consultaP', pacientes=consultaA)
+        except Exception as e:
+            print(f"Error al realizar la consulta en la tabla tbmedicos: {e}")
+            return render_template('consultaP.html', view='consultaP', pacientes=[])
+    
+@app.route('/editarP/<id>')
+def editarP(id):
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute('SELECT * FROM pacientes WHERE id=%s', [id])
+        consultaA = cur.fetchone()
+        return render_template('editarP.html', pacientes=consultaA)
+    except Exception as e:
+        print(f"Error al realizar la consulta en la tabla tbmedicos: {e}")
+        flash('Error al consultar el médico: ' + str(e))
+        return redirect(url_for('expediente'))
+
+@app.route('/ActualizarP/<id>', methods=['POST'])
+def ActualizarP(id):
     if request.method == 'POST':
-        fnombre = request.form['txtnombre']
-        fpaciente = request.form['txtpaciente']
-        ffecha = request.form['txtfecha']
-        cursor = mysql.connection.cursor()
-        cursor.execute('UPDATE tb_pacientes SET nombre=%s, paciente=%s, fecha=%s WHERE id=%s', (fnombre, fpaciente, ffecha, id))
-        mysql.connection.commit()
-        flash('Paciente actualizado correctamente')
-        return redirect(url_for('expedientes'))
-    else:
-        cursor = mysql.connection.cursor()
-        cursor.execute('SELECT * FROM tb_pacientes WHERE id=%s', (id,))
-        paciente = cursor.fetchone()
-        return render_template('editar_paciente.html', paciente=paciente)
+        try:
+            Fmedico = request.form['txtMedico']
+            Fnombre = request.form['txtNombre']
+            Ffecha_nac = request.form['txtfecha_nac']
+            Fenfermedades_cronicas = request.form['txtenfermedades_cronicas']
+            Falergias = request.form['txtalergias']
+            Fantecedentes_familiares = request.form['txtantecedentes_familiares']
 
-@app.route('/eliminarPaciente/<int:id>', methods=['GET', 'POST'])
-def eliminarPaciente(id):
-    cursor = mysql.connection.cursor()
-    cursor.execute('DELETE FROM tb_pacientes WHERE id=%s', (id,))
-    mysql.connection.commit()
-    flash('Paciente eliminado correctamente')
-    return redirect(url_for('expedientes'))
+            cursor = mysql.connection.cursor()
+            cursor.execute('UPDATE pacientes SET medico=%s, nombre=%s, fecha_nac=%s, enfermedades_cronicas=%s, alergias=%s, antecedentes_familiares=%s WHERE id=%s', 
+                           (Fmedico, Fnombre, Ffecha_nac, Fenfermedades_cronicas, Falergias, Fantecedentes_familiares, id))
+            
+            mysql.connection.commit()
+            flash('Médico actualizado correctamente')
+            return redirect(url_for('expediente'))
 
-@app.errorhandler(404)
-def paginando(e):
-    return 'sintaxis incorrecta'
+        except Exception as e:
+            flash('Error al actualizar el médico: ' + str(e))
+            print(e)
+            return redirect(url_for('expediente'))
 
-def create_tables():
-    conn = MySQLdb.connect(host="localhost", user="root", passwd="", db="bdflask")
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS tb_medicos (
-            id_medico INT AUTO_INCREMENT PRIMARY KEY,
-            nombre VARCHAR(50),
-            correo VARCHAR(45),
-            id_roles INT,
-            cedula VARCHAR(8),
-            rfc VARCHAR(11),
-            contrasena VARCHAR(45)
-        )
-    ''')
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS tb_pacientes (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            nombre VARCHAR(50),
-            paciente VARCHAR(50),
-            fecha DATE,
-            id_medico INT,
-            FOREIGN KEY (id_medico) REFERENCES tb_medicos(id_medico)
-        )
-    ''')
-    conn.commit()
-    cursor.close()
-    conn.close()
-
+    
 if __name__ == '__main__':
-    create_tables()
-    app.run(debug=True, port=7000)
+    app.run(port=9000, debug=True)

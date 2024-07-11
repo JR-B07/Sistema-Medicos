@@ -10,37 +10,38 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="btn-group">
             <a class="btn btn-dark" href="{{ url_for('home') }}">Inicio</a>
+            <a class="btn btn-dark" href="{{ url_for('expediente') }}">Opciones de pacientes</a>
 
         </div>
     </nav>
     <div class="container">
-        <h1 class="my-4">Lista de Médicos</h1>
+        <h1 class="my-4">Lista de expedientes</h1>
         <table class="table table-striped table-hover">
             <thead class="table-dark">
                 <tr>
                     <th scope="col">ID</th>
+                    <th scope="col">Medico</th>
                     <th scope="col">Nombre</th>
-                    <th scope="col">RFC</th>
-                    <th scope="col">Cédula Profesional</th>
-                    <th scope="col">Correo Electrónico</th>
-                    <th scope="col">Contraseña</th>
-                    <th scope="col">Rol</th>
+                    <th scope="col">Fecha Nacimiento</th>
+                    <th scope="col">Enfermedades Cronicas</th>
+                    <th scope="col">Alergias</th>
+                    <th scope="col">Antecedentes Familiares</th>
                     <th scope="col">Acciones</th>
                 </tr>
             </thead>
             <tbody>
-                {% for medico in medicos %}
+                {% for pacientes in pacientes %}
                 <tr>
-                    <td>{{ medico[0] }}</td>
-                    <td>{{ medico[1] }}</td>
-                    <td>{{ medico[2] }}</td>
-                    <td>{{ medico[3] }}</td>
-                    <td>{{ medico[4] }}</td>
-                    <td>{{ medico[5] }}</td>
-                    <td>{{ medico[6] }}</td>
+                    <td>{{ pacientes[0] }}</td>
+                    <td>{{ pacientes[1] }}</td>
+                    <td>{{ pacientes[2] }}</td>
+                    <td>{{ pacientes[3] }}</td>
+                    <td>{{ pacientes[4] }}</td>
+                    <td>{{ pacientes[5] }}</td>
+                    <td>{{ pacientes[6] }}</td>
                     <td>
-                        <a href="/editar/{{medico.0}}" class="btn btn-dark btn-sm me-1">Editar</a>
-                        <a href="/eliminar/{{medico.0}}"class="btn btn-dark btn-sm me-1" onclick="return eliminar()">Borrar</a>
+                        <a href="/editarP/{{pacientes.0}}" class="btn btn-dark btn-sm me-1">Editar</a>
+                        <a href="/eliminar/{{pacientes.0}}"class="btn btn-dark btn-sm me-1" onclick="return eliminar()">Borrar</a>
                     </td>
                 </tr>
                 {% endfor %}
