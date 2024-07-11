@@ -1,6 +1,10 @@
+import MySQLdb
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, request, render_template, url_for, redirect, flash
 from flask_mysqldb import MySQL
-from werkzeug.security import generate_password_hash, check_password_hash
+<< << << < HEAD
+== == == =
+>>>>>> > d575e17aaa38bb46feecd9556f0721af9973abde
 
 app = Flask(__name__)
 
@@ -11,7 +15,14 @@ app.config['MYSQL_PASSWORD'] = ''
 app.config['MYSQL_DB'] = 'bdflask'
 app.secret_key = 'mysecretkey'
 
+<< << << < HEAD
 mysql = MySQL(app)
+
+== == == =
+app.secret_key = 'mysecretkey'
+
+mysql = MySQL(app)
+>>>>>> > d575e17aaa38bb46feecd9556f0721af9973abde
 
 
 @app.route('/')
@@ -42,7 +53,10 @@ def registros():
 
 @app.route('/consulta')
 def consulta():
-    try:
+
+
+<< << << < HEAD
+   try:
         cursor = mysql.connection.cursor()
         cursor.execute('SELECT * FROM tb_medicos')
         medicos = cursor.fetchall()
@@ -52,6 +66,13 @@ def consulta():
         print(f"Error al realizar la consulta en la tabla tb_medicos: {e}")
         flash('Error al realizar la consulta.')
         return render_template('consulta.html', medicos=[])
+
+== =====
+   cursor = mysql.connection.cursor()
+    cursor.execute('SELECT * FROM tb_medicos')
+    medicos = cursor.fetchall()
+    return render_template('consulta.html', medicos=medicos)
+>>>>>> > d575e17aaa38bb46feecd9556f0721af9973abde
 
 
 @app.route('/expedientes')
@@ -89,18 +110,29 @@ def guardarPaciente():
             flash('El nombre del médico no existe en la tabla de médicos.')
             return redirect(url_for('expedientes'))
 
-        id_medico = medico[0]
+<<<<<< < HEAD
+   id_medico = medico[0]
 
-        try:
-            cursor.execute('INSERT INTO tb_pacientes (nombre, paciente, fecha, id_medico) VALUES (%s, %s, %s, %s)',
-                           (fnombre, fpaciente, ffecha, id_medico))
-            mysql.connection.commit()
-            flash('Expediente generado correctamente')
-        except Exception as e:
-            print(f"Error al guardar el expediente: {e}")
-            flash('Error al generar el expediente. Intente nuevamente.')
+    try:
+        cursor.execute('INSERT INTO tb_pacientes (nombre, paciente, fecha, id_medico) VALUES (%s, %s, %s, %s)',
+                       (fnombre, fpaciente, ffecha, id_medico))
+        mysql.connection.commit()
+        flash('Expediente generado correctamente')
+    except Exception as e:
+        print(f"Error al guardar el expediente: {e}")
+        flash('Error al generar el expediente. Intente nuevamente.')
 
-        return redirect(url_for('expedientes'))
+    return redirect(url_for('expedientes'))
+
+
+== =====
+   # Insertar el nuevo paciente
+   cursor.execute('INSERT INTO tb_pacientes (nombre, paciente, fecha, id_medico) VALUES (%s, %s, %s, %s)', (fnombre, fpaciente, ffecha, medico[0]))
+    mysql.connection.commit()
+    flash('Expediente generado correctamente')
+    return redirect(url_for('expedientes'))
+
+>>>>>> > d575e17aaa38bb46feecd9556f0721af9973abde
 
 
 @app.route('/guardarMedico', methods=['POST'])
@@ -111,16 +143,28 @@ def guardarMedico():
         frol = request.form['txtrol']
         fcedula = request.form['txtcedula']
         frfc = request.form['txtrfc']
-        fcontraseña = request.form['txtcontraseña']
+<<<<<< < HEAD
+   fcontraseña = request.form['txtcontraseña']
 
-        hashed_password = generate_password_hash(fcontraseña, method='sha256')
+    hashed_password = generate_password_hash(fcontraseña, method='sha256')
 
-        cursor = mysql.connection.cursor()
-        cursor.execute('INSERT INTO tb_medicos (nombre, correo, id_roles, cedula, rfc, contraseña) VALUES (%s, %s, %s, %s, %s, %s)',
-                       (fnombre, fcorreo, frol, fcedula, frfc, hashed_password))
-        mysql.connection.commit()
-        flash('Médico integrado correctamente')
-        return redirect(url_for('consulta'))
+    cursor = mysql.connection.cursor()
+    cursor.execute('INSERT INTO tb_medicos (nombre, correo, id_roles, cedula, rfc, contraseña) VALUES (%s, %s, %s, %s, %s, %s)',
+                   (fnombre, fcorreo, frol, fcedula, frfc, hashed_password))
+== =====
+   fcontrasena = request.form['txtcontrasena']
+    cursor = mysql.connection.cursor()
+    cursor.execute('INSERT INTO tb_medicos (nombre, correo, id_roles, cedula, rfc, contrasena) VALUES (%s, %s, %s, %s, %s, %s)',
+                   (fnombre, fcorreo, frol, fcedula, frfc, fcontrasena))
+>>>>>> > d575e17aaa38bb46feecd9556f0721af9973abde
+   mysql.connection.commit()
+    flash('Médico integrado correctamente')
+    return redirect(url_for('consulta'))
+
+<<<<<< < HEAD
+
+== =====
+>>>>>> > d575e17aaa38bb46feecd9556f0721af9973abde
 
 
 @app.route('/editarPaciente/<int:id>', methods=['GET', 'POST'])
@@ -140,6 +184,10 @@ def editarPaciente(id):
         cursor.execute('SELECT * FROM tb_pacientes WHERE id=%s', (id,))
         paciente = cursor.fetchone()
         return render_template('editar_paciente.html', paciente=paciente)
+<<<<<< < HEAD
+
+== =====
+>>>>>> > d575e17aaa38bb46feecd9556f0721af9973abde
 
 
 @app.route('/eliminarPaciente/<int:id>', methods=['GET', 'POST'])
@@ -150,6 +198,8 @@ def eliminarPaciente(id):
     flash('Paciente eliminado correctamente')
     return redirect(url_for('expedientes'))
 
+<<<<<< < HEAD
+
 
 @app.errorhandler(404)
 def paginando(e):
@@ -158,3 +208,14 @@ def paginando(e):
 
 if __name__ == '__main__':
     app.run(debug=True, port=3000)
+== =====
+
+
+@app.errorhandler(404)
+def paginando(e):
+    return 'sintaxis incorrecta'
+
+if __name__ == '__main__':
+    create_tables()
+    app.run(debug=True, port=7000)
+>>>>>> > d575e17aaa38bb46feecd9556f0721af9973abde
